@@ -45,14 +45,16 @@ public class HomeController implements Initializable {
     @FXML
     private Label dirMessage;
     @FXML
-    private RadioButton rb1, rb2, rb3, rb4;
+    private RadioButton rb1, rb2, rb3, rb4, LT_RB, GT_RB, EQ_RB;
     @FXML
     private TextArea textArea;
     public static List<String> pathList = new ArrayList<>();
     private List<String> errorList = new ArrayList<>();
-    private ToggleGroup group = new ToggleGroup();
-    public static TextField textField, width, height;
+    private ToggleGroup group = new ToggleGroup(), compareGroup = new ToggleGroup();
+    public static TextField width, height;
+    public static TextField[] textFields;
     public static String outputPath;
+    public static int type = 1, ctype = 1;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -61,56 +63,60 @@ public class HomeController implements Initializable {
         outputLink.setText(homeDirectory.getPath());
         outputPath = outputLink.getText();
         initRadioGroup();
-        initTextArea();
-        init1();
-        //监听单选按钮的变化
+        initType();
+        //监听类型单选按钮的变化
         group.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            type = Integer.valueOf(newValue.getUserData().toString());
+            switch (type) {
+                case 1:
+                    initType();
+                    break;
+                case 2:
+                    initTypeUI(new String[]{"按比例(W/H)"}, new String[]{"1"});
+                    break;
+                case 3:
+                    initTypeUI(new String[]{"按文件大小"}, new String[]{"1"});
+                    break;
+                case 4:
+                    initTypeUI(new String[]{"按文件名"}, new String[]{"*.jpg"});
+                    break;
+                default:
+                    break;
+            }
+        });
+        compareGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
+            ctype = Integer.valueOf(newValue.getUserData().toString());
         });
         //点击开始按钮
-        beginBt.setOnAction(event -> {
-            beginFilter();
-        });
+        beginBt.setOnAction(event -> beginFilter());
         msg("初始化完毕...");
     }
 
     private void beginFilter() {
-        int select = Integer.valueOf(String.valueOf(group.getSelectedToggle().getUserData()));
-        switch (select) {
-            case 1:
-                final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(1);
-                FileThread producer = new FileThread(messageQueue);
-                Thread t = new Thread(producer);
-                t.setDaemon(true);
-                t.start();
-                final LongProperty lastUpdate = new SimpleLongProperty();
+        final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(1);
+        FileThread producer = new FileThread(messageQueue);
+        Thread t = new Thread(producer);
+        t.setDaemon(true);
+        t.start();
+        final LongProperty lastUpdate = new SimpleLongProperty();
 
-                final long minUpdateInterval = 0; // nanoseconds. Set to higher number to slow output.
+        final long minUpdateInterval = 0; // nanoseconds. Set to higher number to slow output.
 
-                AnimationTimer timer = new AnimationTimer() {
+        AnimationTimer timer = new AnimationTimer() {
 
-                    @Override
-                    public void handle(long now) {
-                        if (now - lastUpdate.get() > minUpdateInterval) {
-                            final String message = messageQueue.poll();
-                            if (message != null) {
-                                msg(message);
-                            }
-                            lastUpdate.set(now);
-                        }
+            @Override
+            public void handle(long now) {
+                if (now - lastUpdate.get() > minUpdateInterval) {
+                    final String message = messageQueue.poll();
+                    if (message != null) {
+                        msg(message);
                     }
+                    lastUpdate.set(now);
+                }
+            }
 
-                };
-                timer.start();
-                break;
-            case 2:
-                break;
-            case 3:
-                break;
-            case 4:
-                break;
-            default:
-                ;
-        }
+        };
+        timer.start();
     }
 
     public void chooseDirectory(ActionEvent event) throws IOException {
@@ -141,9 +147,6 @@ public class HomeController implements Initializable {
         errorList.clear();
     }
 
-    private void initTextArea() {
-    }
-
     public void getFiles(File dir) {
         File[] files = dir.listFiles();
         for (File file : files) {
@@ -155,7 +158,6 @@ public class HomeController implements Initializable {
                     if (Pattern.matches(".+\\.(png|jpg|jpeg|ico|bmp)", file.getName())) {
                         pathList.add(file.getPath());
                     }
-
                 }
             }
         }
@@ -195,9 +197,18 @@ public class HomeController implements Initializable {
         rb2.setUserData(2);
         rb3.setUserData(3);
         rb4.setUserData(4);
+        //比较方式的按钮组
+        compareGroup = new ToggleGroup();
+        LT_RB.setToggleGroup(compareGroup);
+        GT_RB.setSelected(true);
+        GT_RB.setToggleGroup(compareGroup);
+        EQ_RB.setToggleGroup(compareGroup);
+        LT_RB.setUserData(-1);
+        GT_RB.setUserData(1);
+        EQ_RB.setUserData(0);
     }
 
-    private void init1() {
+    private void initType() {
         ObservableList<Node> children = inputVBox.getChildren();
         children.clear();
         Label label_width = new Label();
@@ -212,5 +223,22 @@ public class HomeController implements Initializable {
         children.add(width);
         children.add(label_height);
         children.add(height);
+    }
+
+    private void initTypeUI(String[] texts, String[] values) {
+        ObservableList<Node> children = inputVBox.getChildren();
+        children.clear();
+        for (String t : texts) {
+            Label label = new Label();
+            label.setText(t);
+            children.add(label);
+        }
+        textFields = new TextField[values.length];
+        for (int i = 0; i < values.length; i++) {
+            textFields[i] = new TextField();
+            textFields[i].setText(values[i]);
+            children.add(textFields[i]);
+        }
+
     }
 }

@@ -1,0 +1,20 @@
+<component name="ArtifactManager">
+  <artifact type="javafx" name="imgpicker">
+    <output-path>$PROJECT_DIR$/out/artifacts/imgpicker</output-path>
+    <properties id="javafx-properties">
+      <options>
+        <option name="appClass" value="hafuhafu.Main" />
+        <option name="description" value="图片筛选" />
+        <option name="htmlPlaceholderId" value="" />
+        <option name="title" value="Image Picker" />
+        <option name="vendor" value="HafuHafu" />
+        <option name="version" value="Beta" />
+      </options>
+    </properties>
+    <root id="root">
+      <element id="archive" name="imgpicker.jar">
+        <element id="module-output" name="imgpicker" />
+      </element>
+    </root>
+  </artifact>
+</component>
