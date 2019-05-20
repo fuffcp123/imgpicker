@@ -37,7 +37,7 @@
                 <RadioButton fx:id="rb1" layoutX="60.0" layoutY="40.0" mnemonicParsing="false" text="按分辨率"/>
                 <RadioButton fx:id="rb2" layoutX="160.0" layoutY="40.0" mnemonicParsing="false" text="按比例"/>
                 <RadioButton fx:id="rb3" layoutX="260.0" layoutY="40.0" mnemonicParsing="false" text="按文件大小"/>
-                <RadioButton fx:id="rb4" layoutX="360.0" layoutY="40.0" mnemonicParsing="false" text="按扩展名"/>
+                <RadioButton fx:id="rb4" layoutX="360.0" layoutY="40.0" mnemonicParsing="false" text="按文件名"/>
                 <Button fx:id="beginBt" layoutX="480.0" layoutY="40.0" mnemonicParsing="false" text="开始"/>
                 <VBox fx:id="inputVBox" layoutX="58.0" layoutY="63.0" prefHeight="84.0" prefWidth="370.0"/>
                 <TextArea fx:id="textArea" editable="false" layoutX="15.0" layoutY="145.0" prefHeight="110.0"

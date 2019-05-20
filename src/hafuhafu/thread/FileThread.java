@@ -40,92 +40,67 @@ public class FileThread implements Runnable {
                 int h = Integer.valueOf(HomeController.height.getText());
                 messageQueue.put(Info.info("------任务开始------"));
                 for (int i = 0; i < list.size(); i++) {
-                    File file = new File(list.get(i));
-                    BufferedImage image = ImageIO.read(file);
-                    if (null != image) {
-                        //不同情况的判断
-                        int width = image.getWidth();
-                        int height = image.getHeight();
-                        TextField[] textFields = HomeController.textFields;
-                        switch (HomeController.type) {
-                            case 1:
-                                switch (HomeController.ctype) {
-                                    case -1:
-                                        if (width < w && height < h) {
-                                            copy(file);
-                                        }
-                                        break;
-                                    case 0:
-                                        if (width == w && height == h) {
-                                            copy(file);
-                                        }
-                                        break;
-                                    case 1:
-                                        if (width > w && height > h) {
-                                            copy(file);
-                                        }
-                                        break;
-                                }
+                    try {
+                        File file = new File(list.get(i));
+                        BufferedImage image = ImageIO.read(file);
+                        if (null != image) {
+                            //不同情况的判断
+                            int width = image.getWidth();
+                            int height = image.getHeight();
+                            TextField[] textFields = HomeController.textFields;
+                            switch (HomeController.type) {
+                                case 1:
+                                    switch (HomeController.ctype) {
+                                        case -1:
+                                            if (width < w && height < h) {
+                                                copy(file);
+                                            }
+                                            break;
+                                        case 0:
+                                            if (width == w && height == h) {
+                                                copy(file);
+                                            }
+                                            break;
+                                        case 1:
+                                            if (width > w && height > h) {
+                                                copy(file);
+                                            }
+                                            break;
+                                    }
 
-                                break;
-                            case 2:
-                                double ratio = Double.valueOf(textFields[0].getText());
-                                if (ratio > 0) {
-                                    switch (HomeController.ctype) {
-                                        case -1:
-                                            if (1.0 * width / height < ratio) {
-                                                copy(file);
-                                            }
-                                            break;
-                                        case 0:
-                                            if (1.0 * width / height == ratio) {
-                                                copy(file);
-                                            }
-                                            break;
-                                        case 1:
-                                            if (1.0 * width / height > ratio) {
-                                                copy(file);
-                                            }
-                                            break;
+                                    break;
+                                case 2:
+                                    double ratio = Double.valueOf(textFields[0].getText());
+                                    if (ratio > 0) {
+                                        double fileRatio = 1.0 * width / height;
+                                        compare(fileRatio, ratio, file);
+                                    } else {
+                                        messageQueue.put(Info.error("比例必须大于0"));
                                     }
-                                } else {
-                                    messageQueue.put(Info.error("比例必须大于0"));
-                                }
-                                break;
-                            case 3:
-                                double size = Double.valueOf(textFields[0].getText());
-                                if (size > 0) {
-                                    switch (HomeController.ctype) {
-                                        case -1:
-                                            if (1.0 * file.length() / 1024 / 1024 < size) {
-                                                copy(file);
-                                            }
-                                            break;
-                                        case 0:
-                                            if (1.0 * file.length() / 1024 / 1024 == size) {
-                                                copy(file);
-                                            }
-                                            break;
-                                        case 1:
-                                            if (1.0 * file.length() / 1024 / 1024 > size) {
-                                                copy(file);
-                                            }
-                                            break;
+                                    break;
+                                case 3:
+                                    double size = Double.valueOf(textFields[0].getText());
+                                    if (size > 0) {
+                                        double fileSize = 1.0 * file.length() / 1024 / 1024;
+                                        compare(fileSize, size, file);
+                                    } else {
+                                        messageQueue.put(Info.error("文件大小必须大于0"));
                                     }
-                                } else {
-                                    messageQueue.put(Info.error("文件大小必须大于0"));
-                                }
-                                break;
-                            case 4:
-                                String pattern = textFields[0].getText();
-                                if (Pattern.matches(pattern, file.getName())) {
-                                    copy(file);
-                                }
-                                break;
-                            default:
-                                break;
+                                    break;
+                                case 4:
+                                    String pattern = textFields[0].getText();
+                                    if (Pattern.matches(pattern, file.getName())) {
+                                        copy(file);
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+
                         }
-
+                    } catch (Exception e) {
+                        messageQueue.put(Info.error("读取图片时出现异常:" + e.getMessage()));
+                        continue;
                     }
                 }
                 long endTime = System.currentTimeMillis();
@@ -135,16 +110,47 @@ public class FileThread implements Runnable {
 
         } catch (InterruptedException exc) {
             System.out.println("Message producer interrupted: exiting.");
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
-    private void copy(File file) throws IOException, InterruptedException {
-        FileOutputStream fos = new FileOutputStream(new File(HomeController.outputPath, file.getName()));
-        Files.copy(file.toPath(), fos);
-        // TODO: 2019/5/20 若存在同名文件没进行判断
-        messageQueue.put(Info.info(file.getName() + "复制成功"));
-        fos.close();
+    private void copy(File file) throws InterruptedException {
+        try {
+            FileOutputStream fos = new FileOutputStream(new File(HomeController.outputPath, file.getName()));
+            Files.copy(file.toPath(), fos);
+            // TODO: 2019/5/20 若存在同名文件没进行判断
+            messageQueue.put(Info.info(file.getName() + "复制成功"));
+            fos.close();
+        } catch (Exception e) {
+            messageQueue.put(Info.error("复制时出现异常:" + e.getMessage()));
+        }
+    }
+
+    /**
+     * 进行比较判断
+     *
+     * @param file   来自文件的属性
+     * @param user   用户设置的属性
+     * @param target 目标文件
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    private void compare(double file, double user, File target) throws InterruptedException {
+        switch (HomeController.ctype) {
+            case -1:
+                if (file < user) {
+                    copy(target);
+                }
+                break;
+            case 0:
+                if (file == user) {
+                    copy(target);
+                }
+                break;
+            case 1:
+                if (file > user) {
+                    copy(target);
+                }
+                break;
+        }
     }
 }
