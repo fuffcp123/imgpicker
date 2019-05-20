@@ -1,6 +1,5 @@
 package hafuhafu.controller;
 
-import hafuhafu.Main;
 import hafuhafu.thread.FileThread;
 import hafuhafu.utils.Info;
 import javafx.animation.AnimationTimer;
@@ -9,10 +8,8 @@ import javafx.beans.property.SimpleLongProperty;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextArea;
@@ -49,7 +46,6 @@ public class HomeController implements Initializable {
     @FXML
     private TextArea textArea;
     public static List<String> pathList = new ArrayList<>();
-    private List<String> errorList = new ArrayList<>();
     private ToggleGroup group = new ToggleGroup(), compareGroup = new ToggleGroup();
     public static TextField width, height;
     public static TextField[] textFields;
@@ -99,8 +95,8 @@ public class HomeController implements Initializable {
         t.setDaemon(true);
         t.start();
         final LongProperty lastUpdate = new SimpleLongProperty();
-
-        final long minUpdateInterval = 0; // nanoseconds. Set to higher number to slow output.
+        // nanoseconds. Set to higher number to slow output.
+        final long minUpdateInterval = 0;
 
         AnimationTimer timer = new AnimationTimer() {
 
@@ -119,7 +115,12 @@ public class HomeController implements Initializable {
         timer.start();
     }
 
-    public void chooseDirectory(ActionEvent event) throws IOException {
+    /**
+     * 获取选中的目录的路径
+     *
+     * @param event 点击事件
+     */
+    public void chooseDirectory(ActionEvent event) {
         Button button = (Button) event.getSource();
         String id = button.getId();
         String linkId = id.substring(0, id.indexOf("Bt")) + "Link";
@@ -133,22 +134,27 @@ public class HomeController implements Initializable {
             hyperlink.setText(file.getPath());
             //获取该目录中文件的信息
             if (linkId.contains("input")) {
-                initData();
+                //初始化数据
+                pathList.clear();
+                //如果点击的是选择输入的按钮,获取该目录中的信息
                 getFiles(file);
                 dirMessage.setText("该目录中共有" + pathList.size() + "张图片");
             } else if (linkId.contains("output")) {
+                //如果时输出的按钮,设置输出目录
                 outputPath = file.getPath();
             }
         }
     }
 
-    private void initData() {
-        pathList.clear();
-        errorList.clear();
-    }
 
+    /**
+     * 根据文件类型获取匹配的文件路径
+     *
+     * @param dir 根目录
+     */
     public void getFiles(File dir) {
         File[] files = dir.listFiles();
+        //遍历并筛选
         for (File file : files) {
             if (file.isDirectory()) {
                 getFiles(file);
@@ -163,6 +169,12 @@ public class HomeController implements Initializable {
         }
     }
 
+    /**
+     * 打开目录
+     *
+     * @param event 点击事件
+     * @throws IOException
+     */
     public void openDir(ActionEvent event) throws IOException {
         Hyperlink source = (Hyperlink) event.getSource();
         File file = new File(source.getText());
@@ -173,6 +185,11 @@ public class HomeController implements Initializable {
         }
     }
 
+    /**
+     * 弹出框
+     *
+     * @param msg 消息
+     */
     private void alertMsg(String msg) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setHeaderText(null);
@@ -180,6 +197,11 @@ public class HomeController implements Initializable {
         alert.showAndWait();
     }
 
+    /**
+     * 在textArea控制台追加消息,带换行和时间
+     *
+     * @param str 消息
+     */
     private void msg(String str) {
         Date date = new Date();
         SimpleDateFormat sdf = new SimpleDateFormat("MM-dd HH:mm:ss");
@@ -187,6 +209,9 @@ public class HomeController implements Initializable {
         textArea.appendText(time + ":" + str + Info.separator());
     }
 
+    /**
+     * 初始化按钮组
+     */
     private void initRadioGroup() {
         rb1.setToggleGroup(group);
         rb2.setToggleGroup(group);
@@ -208,6 +233,9 @@ public class HomeController implements Initializable {
         EQ_RB.setUserData(0);
     }
 
+    /**
+     * 初始化宽高类型
+     */
     private void initType() {
         ObservableList<Node> children = inputVBox.getChildren();
         children.clear();
@@ -225,6 +253,12 @@ public class HomeController implements Initializable {
         children.add(height);
     }
 
+    /**
+     * 初始化其他类型
+     *
+     * @param texts  类型label数组
+     * @param values 类型textField的值
+     */
     private void initTypeUI(String[] texts, String[] values) {
         ObservableList<Node> children = inputVBox.getChildren();
         children.clear();
