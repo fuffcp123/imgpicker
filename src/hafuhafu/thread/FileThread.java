@@ -66,6 +66,8 @@ public class FileThread implements Runnable {
                                                 copy(file);
                                             }
                                             break;
+                                        default:
+                                            break;
                                     }
 
                                     break;
@@ -150,6 +152,8 @@ public class FileThread implements Runnable {
                 if (file > user) {
                     copy(target);
                 }
+                break;
+            default:
                 break;
         }
     }
