@@ -88,11 +88,11 @@ public class HomeController implements Initializable {
     }
 
     private void beginFilter() {
+
         final BlockingQueue<String> messageQueue = new ArrayBlockingQueue<>(1);
         FileThread producer = new FileThread(messageQueue);
-        Thread t = new Thread(producer);
-        t.setDaemon(true);
-        t.start();
+        ExecutorService service = Executors.newCachedThreadPool();
+        service.execute(producer);
         final LongProperty lastUpdate = new SimpleLongProperty();
         // nanoseconds. Set to higher number to slow output.
         final long minUpdateInterval = 0;
@@ -124,7 +124,6 @@ public class HomeController implements Initializable {
         String id = button.getId();
         String linkId = id.substring(0, id.indexOf("Bt")) + "Link";
         Hyperlink hyperlink = (Hyperlink) root.getScene().lookup("#" + linkId);
-        //不知道该怎么通过类似getById的方式获取控件 因此以反射的形式获取
         DirectoryChooser directoryChooser = new DirectoryChooser();
         directoryChooser.setTitle("选择文件目录");
         File file = directoryChooser.showDialog(root.getScene().getWindow());
@@ -132,13 +131,15 @@ public class HomeController implements Initializable {
             //将目录路径显示
             hyperlink.setText(file.getPath());
             //获取该目录中文件的信息
-            if (linkId.contains("input")) {
+            String inputType = "input";
+            String outputType = "output";
+            if (linkId.contains(inputType)) {
                 //初始化数据
                 pathList.clear();
                 //如果点击的是选择输入的按钮,获取该目录中的信息
                 getFiles(file);
                 dirMessage.setText("该目录中共有" + pathList.size() + "张图片");
-            } else if (linkId.contains("output")) {
+            } else if (linkId.contains(outputType)) {
                 //如果时输出的按钮,设置输出目录
                 outputPath = file.getPath();
             }
